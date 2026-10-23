@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Оценка изображений</title>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 720px; margin: 0 auto; padding: 20px; line-height: 1.5; }
+  .step { display: none; }
+  .step.active { display: block; }
+  label { display: block; margin: 12px 0 4px; font-weight: 600; }
+  input[type=number], select, textarea { width: 100%; padding: 8px; font-size: 16px; box-sizing: border-box; }
+  img#stim { max-width: 100%; max-height: 60vh; display: block; margin: 0 auto 20px; }
+  .scale { display: flex; justify-content: space-between; margin: 8px 0; }
+  .scale label { font-weight: normal; text-align: center; margin: 0; cursor: pointer; flex: 1; }
+  .anchors { display: flex; justify-content: space-between; font-size: 14px; color: #555; }
+  button { padding: 12px 24px; font-size: 16px; margin-top: 20px; cursor: pointer; }
+  .q { margin: 28px 0; }
+</style>
+</head>
+<body>
+
+<!-- ШАГ 1: согласие + пол и возраст -->
+<div class="step active" id="s1">
+  <h2>Исследование восприятия изображений</h2>
+  <p>Вам будет показано одно изображение, которое нужно оценить по нескольким шкалам. Это займёт 1–2 минуты. Участие анонимно и добровольно, вы можете закрыть страницу в любой момент.</p>
+  <label><input type="checkbox" id="consent"> Я согласен(на) участвовать в исследовании</label>
+
+  <label for="gender">Пол</label>
+  <select id="gender">
+    <option value="">— выберите —</option>
+    <option>Женский</option>
+    <option>Мужской</option>
+    <option>Другое / не хочу указывать</option>
+  </select>
+
+  <label for="age">Возраст (полных лет)</label>
+  <input type="number" id="age" min="14" max="100">
+
+  <button onclick="start()">Далее</button>
+</div>
+
+<!-- ШАГ 2: картинка + шкалы -->
+<div class="step" id="s2">
+  <img id="stim" alt="">
+
+  <div class="q">
+    <strong>1. Валентность:</strong> насколько приятной или неприятной вам кажется эта картинка?
+    <div class="scale" id="valence"></div>
+    <div class="anchors"><span>1 — очень неприятная</span><span>5 — нейтральная</span><span>9 — очень приятная</span></div>
+  </div>
+
+  <div class="q">
+    <strong>2. Возбуждение:</strong> насколько сильную эмоциональную реакцию вызывает у вас эта картинка?
+    <div class="scale" id="arousal"></div>
+    <div class="anchors"><span>1 — совершенно спокойно</span><span>9 — очень сильная реакция</span></div>
+  </div>
+
+  <div class="q">
+    <label for="assoc">3. Свободные ассоциации (необязательно)</label>
+    <textarea id="assoc" rows="3" placeholder="Что приходит вам в голову, когда вы смотрите на эту картинку?"></textarea>
+  </div>
+
+  <button onclick="submitAnswers()">Отправить</button>
+</div>
+
+<!-- ШАГ 3: спасибо -->
+<div class="step" id="s3">
+  <h2>Спасибо за участие!</h2>
+  <p>Ваш ответ сохранён. Страницу можно закрыть.</p>
+</div>
+
+<script>
+// ===== ДВЕ НАСТРОЙКИ, КОТОРЫЕ НУЖНО ПОМЕНЯТЬ =====
+const API = '<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Оценка изображений</title>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 720px; margin: 0 auto; padding: 20px; line-height: 1.5; }
+  .step { display: none; }
+  .step.active { display: block; }
+  label { display: block; margin: 12px 0 4px; font-weight: 600; }
+  input[type=number], select, textarea { width: 100%; padding: 8px; font-size: 16px; box-sizing: border-box; }
+  img#stim { max-width: 100%; max-height: 60vh; display: block; margin: 0 auto 20px; }
+  .scale { display: flex; justify-content: space-between; margin: 8px 0; }
+  .scale label { font-weight: normal; text-align: center; margin: 0; cursor: pointer; flex: 1; }
+  .anchors { display: flex; justify-content: space-between; font-size: 14px; color: #555; }
+  button { padding: 12px 24px; font-size: 16px; margin-top: 20px; cursor: pointer; }
+  .q { margin: 28px 0; }
+</style>
+</head>
+<body>
+
+<!-- ШАГ 1: согласие + пол и возраст -->
+<div class="step active" id="s1">
+  <h2>Исследование восприятия изображений</h2>
+  <p>Вам будет показано одно изображение, которое нужно оценить по нескольким шкалам. Это займёт 10-15 минуты. Участие анонимно и добровольно, вы можете закрыть страницу в любой момент.</p>
+  <label><input type="checkbox" id="consent"> Я согласен(на) участвовать в исследовании</label>
+
+  <label for="gender">Пол</label>
+  <select id="gender">
+    <option value="">— выберите —</option>
+    <option>Женский</option>
+    <option>Мужской</option>
+    <option>Другое / не хочу указывать</option>
+  </select>
+
+  <label for="age">Возраст (полных лет)</label>
+  <input type="number" id="age" min="14" max="100">
+
+  <button onclick="start()">Далее</button>
+</div>
+
+<!-- ШАГ 2: картинка + шкалы -->
+<div class="step" id="s2">
+  <img id="stim" alt="">
+
+  <div class="q">
+    <strong>1. Валентность:</strong> насколько приятной или неприятной вам кажется эта картинка?
+    <div class="scale" id="valence"></div>
+    <div class="anchors"><span>1 — очень неприятная</span><span>5 — нейтральная</span><span>9 — очень приятная</span></div>
+  </div>
+
+  <div class="q">
+    <strong>2. Возбуждение:</strong> насколько сильную эмоциональную реакцию вызывает у вас эта картинка?
+    <div class="scale" id="arousal"></div>
+    <div class="anchors"><span>1 — совершенно спокойно</span><span>9 — очень сильная реакция</span></div>
+  </div>
+
+  <div class="q">
+    <label for="assoc">3. Свободные ассоциации (необязательно)</label>
+    <textarea id="assoc" rows="3" placeholder="Что приходит вам в голову, когда вы смотрите на эту картинку?"></textarea>
+  </div>
+
+  <button onclick="submitAnswers()">Отправить</button>
+</div>
+
+<!-- ШАГ 3: спасибо -->
+<div class="step" id="s3">
+  <h2>Спасибо за участие!</h2>
+  <p>Ваш ответ сохранён. Страницу можно закрыть.</p>
+</div>
+
+<script>
+// ===== ДВЕ НАСТРОЙКИ, КОТОРЫЕ НУЖНО ПОМЕНЯТЬ =====
+const API = 'ВАШ_URL/exec';   // 1) вставьте ссылку из Шага 4 (между кавычками)
+const IMG_FOLDER = 'images/'; // 2) 'images/' если картинки в папке images; '' (пусто) если лежат в корне
+// ===================================================
+
+const SCALE_MAX = 9;          // поменяйте на 7, если нужна шкала 1–7
+
+let image = null, t0 = null;
+const pid = 'P' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+
+['valence', 'arousal'].forEach(name => {
+  const box = document.getElementById(name);
+  for (let i = 1; i <= SCALE_MAX; i++) {
+    box.insertAdjacentHTML('beforeend',
+      `<label><input type="radio" name="${name}" value="${i}"><br>${i}</label>`);
+  }
+});
+
+function show(id) {
+  document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+async function start() {
+  if (localStorage.getItem('done')) { alert('Вы уже участвовали в исследовании. Спасибо!'); return; }
+  if (!document.getElementById('consent').checked) { alert('Необходимо согласие на участие.'); return; }
+  const gender = document.getElementById('gender').value;
+  const age = +document.getElementById('age').value;
+  if (!gender || !age || age < 14 || age > 100) { alert('Укажите пол и корректный возраст.'); return; }
+
+  try {
+    const r = await fetch(API);
+    image = (await r.json()).image;
+  } catch (e) { alert('Не удалось загрузить изображение. Попробуйте позже.'); return; }
+
+  const img = document.getElementById('stim');
+  img.onload = () => { t0 = Date.now(); show('s2'); };
+  img.onerror = () => { alert('Изображение не найдено. Сообщите исследователю.'); };
+  img.src = IMG_FOLDER + image;
+}
+
+async function submitAnswers() {
+  const v = document.querySelector('input[name=valence]:checked');
+  const a = document.querySelector('input[name=arousal]:checked');
+  if (!v || !a) { alert('Пожалуйста, ответьте на оба вопроса со шкалами.'); return; }
+
+  const payload = {
+    participant_id: pid,
+    image: image,
+    gender: document.getElementById('gender').value,
+    age: +document.getElementById('age').value,
+    valence: +v.value,
+    arousal: +a.value,
+    associations: document.getElementById('assoc').value.trim(),
+    duration_sec: Math.round((Date.now() - t0) / 1000)
+  };
+
+  await fetch(API, {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: { 'Content-Type': 'text/plain' },
+    body: JSON.stringify(payload)
+  });
+  localStorage.setItem('done', '1');
+  show('s3');
+}
+</script>
+</body>
+</html>';   // 1) вставьте ссылку из Шага 4 (между кавычками)
+const IMG_FOLDER = 'images/'; // 2) 'images/' если картинки в папке images; '' (пусто) если лежат в корне
+// ===================================================
+
+const SCALE_MAX = 9;          // поменяйте на 7, если нужна шкала 1–7
+
+let image = null, t0 = null;
+const pid = 'P' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+
+['valence', 'arousal'].forEach(name => {
+  const box = document.getElementById(name);
+  for (let i = 1; i <= SCALE_MAX; i++) {
+    box.insertAdjacentHTML('beforeend',
+      `<label><input type="radio" name="${name}" value="${i}"><br>${i}</label>`);
+  }
+});
+
+function show(id) {
+  document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+async function start() {
+  if (localStorage.getItem('done')) { alert('Вы уже участвовали в исследовании. Спасибо!'); return; }
+  if (!document.getElementById('consent').checked) { alert('Необходимо согласие на участие.'); return; }
+  const gender = document.getElementById('gender').value;
+  const age = +document.getElementById('age').value;
+  if (!gender || !age || age < 14 || age > 100) { alert('Укажите пол и корректный возраст.'); return; }
+
+  try {
+    const r = await fetch(API);
+    image = (await r.json()).image;
+  } catch (e) { alert('Не удалось загрузить изображение. Попробуйте позже.'); return; }
+
+  const img = document.getElementById('stim');
+  img.onload = () => { t0 = Date.now(); show('s2'); };
+  img.onerror = () => { alert('Изображение не найдено. Сообщите исследователю.'); };
+  img.src = IMG_FOLDER + image;
+}
+
+async function submitAnswers() {
+  const v = document.querySelector('input[name=valence]:checked');
+  const a = document.querySelector('input[name=arousal]:checked');
+  if (!v || !a) { alert('Пожалуйста, ответьте на оба вопроса со шкалами.'); return; }
+
+  const payload = {
+    participant_id: pid,
+    image: image,
+    gender: document.getElementById('gender').value,
+    age: +document.getElementById('age').value,
+    valence: +v.value,
+    arousal: +a.value,
+    associations: document.getElementById('assoc').value.trim(),
+    duration_sec: Math.round((Date.now() - t0) / 1000)
+  };
+
+  await fetch(API, {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: { 'Content-Type': 'text/plain' },
+    body: JSON.stringify(payload)
+  });
+  localStorage.setItem('done', '1');
+  show('s3');
+}
+</script>
+</body>
+</html>
