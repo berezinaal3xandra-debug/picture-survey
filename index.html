@@ -9,7 +9,6 @@
   * { box-sizing: border-box; }
   html, body { margin:0; height:100%; }
   body { background:var(--bg); color:var(--fg); font:17px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif; }
-  body.stimbg { background:#808080; }
   #app { min-height:100%; display:flex; align-items:center; justify-content:center; padding:20px; }
   .card { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:28px 32px; max-width:760px; width:100%; }
   .card.wide { max-width:860px; }
@@ -31,9 +30,6 @@
   .field label { display:block; font-weight:600; margin-bottom:4px; }
   .field input, .field select, .field textarea { font:inherit; width:100%; padding:9px 11px; border:1px solid var(--line); border-radius:8px; background:#fff; color:var(--fg); }
   .err { color:#b3261e; min-height:1.4em; margin:6px 0 0; font-size:15px; }
-  .stage { display:flex; align-items:center; justify-content:center; width:100%; height:92vh; }
-  .stim { max-width:min(92vw,800px); max-height:84vh; width:auto; height:auto; display:block; }
-  .fix { font-size:48px; color:#fff; font-weight:300; user-select:none; }
   .q { margin:0 0 26px; }
   .qt { font-weight:600; margin:0 0 10px; }
   .scale { display:grid; grid-template-columns:repeat(9,1fr); gap:6px; }
@@ -51,6 +47,20 @@
   table.ex th { background:var(--bg); }
   .radio { display:flex; gap:18px; flex-wrap:wrap; margin:6px 0 12px; }
   .radio label { display:flex; gap:8px; align-items:center; cursor:pointer; }
+  .card.xwide { max-width:1100px; }
+  .trial { display:grid; grid-template-columns:minmax(0,1.15fr) minmax(0,1fr); gap:28px; align-items:start; }
+  .trial .pic { text-align:center; position:sticky; top:12px; }
+  .trial .pic img { max-width:100%; max-height:78vh; width:auto; height:auto; border-radius:8px; display:block; margin:0 auto; }
+  @media (max-width: 860px) {
+    #app { padding:10px; }
+    .card { padding:20px 16px; }
+    .trial { grid-template-columns:1fr; gap:16px; }
+    .trial .pic { position:static; }
+    .trial .pic img { max-height:46vh; }
+    .scale { gap:4px; }
+    .scale button { padding:12px 0; }
+    .labels { font-size:12px; }
+  }
 </style>
 </head>
 <body>
@@ -66,20 +76,20 @@
    ===================================================================== */
 const CONFIG = {
   ENDPOINT: "PASTE_YOUR_APPS_SCRIPT_URL_HERE",      // адрес веб-приложения Google Apps Script (оканчивается на /exec)
-  RESEARCHER: "[ФИО исследователя]",
-  ORGANIZATION: "[название организации / вуза и адрес]",
-  CONTACT_EMAIL: "[e-mail для вопросов и отзыва согласия]",
-  ETHICS_CONTACT: "[контакты этической комиссии]",
-  RETENTION: "[срок хранения, например: до завершения исследования и публикации результатов, но не более 3 лет]",
+  RESEARCHER: "[Березина Александра]",
+  ORGANIZATION: "[МГЛУ]",
+  CONTACT_EMAIL: "[berezina.al3xandra@gmail.com]",
 
   // Ссылки на документ(ы) согласия. Файл загрузите в репозиторий рядом с index.html.
+  // Если файл .docx: на странице будут две ссылки: «открыть в браузере» (онлайн-просмотр Office) и «скачать файл».
+  // Самый надёжный вариант: сохраните согласие как PDF (consent.pdf) и впишите это имя: он открывается в браузере сам.
   // Если оставить пустую строку "", ссылка на странице не показывается.
   CONSENT_URL: "consent.docx",          // согласие на участие
   CONSENT_DATA_URL: "consent.docx",     // согласие на обработку персональных данных (можно тот же файл)
 
   IMG_DIR: "",                 // картинки лежат в корне репозитория, рядом с index.html (если будут в папке, напишите "images/")
   IMG_EXT: ".jpg",              // основное расширение; если файла нет, скрипт пробует ещё .jpeg, .png и варианты в верхнем регистре
-  // Ваши 60 картинок: имена файлов БЕЗ расширения (в папке images/ они лежат как <имя>.jpg).
+  // Ваши 60 картинок: имена файлов БЕЗ расширения (на сайте они лежат как <имя>.jpg).
   // Имена должны совпадать с файлами буква в букву, включая регистр.
   MAIN_IMAGES: [
     "declan-sun-RZv4hCmoN0k-unsplash",
@@ -143,29 +153,25 @@ const CONFIG = {
     "sijmen-van-hooff-spTIl-cAHq4-unsplash",
     "yang-rui-wQkVPfw8vIk-unsplash"
   ],
-  // Якорные и разминочные картинки (необязательно). 0 = не использовать.
-  // Если появятся, назовите файлы: anc_pos_01.jpg.., anc_neg_01.jpg.., anc_neu_01.jpg.., warm_01.jpg..
+  // Якорные картинки (необязательно). 0 = не использовать.
+  // Если появятся, назовите файлы: anc_pos_01.jpg.., anc_neg_01.jpg.., anc_neu_01.jpg..
   N_POS: 0, N_NEG: 0, N_NEU: 0,
-  N_WARM: 0,
 
-  FIXATION_MS: 500,             // крестик перед картинкой
-  STIM_MS: 3000,                // время показа картинки (одинаковое для всех)
   BREAK_EVERY: 15,              // перерыв после каждых N картинок
-  N_ASSOC: 12,                  // для скольких основных картинок просить необязательные ассоциации
-  ATTENTION_AFTER: [20, 50],    // после какой по счёту картинки ставить проверку внимания
-  MIN_SCREEN_WIDTH: 800,        // минимальная ширина экрана (только компьютер или ноутбук)
+  N_ASSOC: 12,                  // для скольких картинок показывать необязательное поле «ассоциации» (0 = нигде)
   MIN_AGE: 18,
 
   ALLOW_REPEAT: true,           // кнопка «Пройти ещё раз» в конце
   ASK_CONTACT: true,            // в конце спросить, готов ли человек участвовать в других исследованиях, и собрать контакт
   LINK_CONTACT_TO_CODE: false,  // false: контакт хранится отдельно и НЕ связан с ответами; true: рядом пишется код участника
-  VERSION: "1.3"
+  VERSION: "1.4"
 };
 /* ===================================================================== */
 
 const params = new URLSearchParams(location.search);
-const TEST = params.has('test');           // ?test  -> быстрый тестовый режим, данные НЕ отправляются
-if (TEST) { CONFIG.STIM_MS = 300; CONFIG.FIXATION_MS = 100; }
+const TEST = params.has('test');           // ?test  -> тестовый режим, данные НЕ отправляются
+
+const ANON = 'Данные собираются анонимно: имя, адрес электронной почты и другая информация, позволяющая установить личность участника, не запрашиваются. Все полученные данные будут храниться в обезличенном виде и использоваться только в рамках научной работы, исследовательских публикаций, академических презентаций и конференций.';
 window.__sent = [];
 
 const $app = document.getElementById('app');
@@ -178,25 +184,19 @@ function el(html) { const t = document.createElement('template'); t.innerHTML = 
 function shuffle(a) { const b = a.slice(); for (let i = b.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [b[i], b[j]] = [b[j], b[i]]; } return b; }
 function sample(a, n) { return shuffle(a).slice(0, n); }
 function makeCode() { const ch = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let s = ''; for (let i = 0; i < 6; i++) s += ch[Math.floor(Math.random() * ch.length)]; return s; }
-function nextFrame() {   // ждём отрисовку; запасной таймер на случай, когда вкладка не активна
-  return new Promise(r => { let d = false; const f = () => { if (!d) { d = true; r(); } };
-    requestAnimationFrame(() => requestAnimationFrame(f)); setTimeout(f, 120); });
-}
-
 /* ---------- список картинок ---------- */
 const ids = {
   main: CONFIG.MAIN_IMAGES.slice(),
   anchors: [].concat(
     Array.from({ length: CONFIG.N_POS }, (_, i) => 'anc_pos_' + pad(i + 1, 2)),
     Array.from({ length: CONFIG.N_NEG }, (_, i) => 'anc_neg_' + pad(i + 1, 2)),
-    Array.from({ length: CONFIG.N_NEU }, (_, i) => 'anc_neu_' + pad(i + 1, 2))),
-  warm: Array.from({ length: CONFIG.N_WARM }, (_, i) => 'warm_' + pad(i + 1, 2))
+    Array.from({ length: CONFIG.N_NEU }, (_, i) => 'anc_neu_' + pad(i + 1, 2)))
 };
-const imageType = id => id.startsWith('warm_') ? 'warm' : id.startsWith('anc_') ? id.slice(0, 7) : 'main';
+const imageType = id => id.startsWith('anc_') ? id.slice(0, 7) : 'main';
 
 /* ---------- состояние ---------- */
 const S = {
-  pid: makeCode(), attempt: 1, demo: {}, nickname: '', attn: [],
+  pid: makeCode(), attempt: 1, demo: {}, nickname: '',
   unsent: [], unsentPages: [], trialsSent: 0, active: false,
   tStart: new Date(), tPerf: nowMs(), screenW: window.innerWidth, screenH: window.innerHeight,
   consentAt: { participation: '', data: '' }, contactDone: false
@@ -270,26 +270,30 @@ window.addEventListener('error', e => {
 });
 
 /* ---------- вспомогательное для текста ---------- */
-function docLink(url, text) { return url ? '<p class="note">' + text + ': <a href="' + url + '" target="_blank" rel="noopener">открыть документ</a></p>' : ''; }
+function docLink(url, text) {
+  if (!url) return '';
+  let abs = url;
+  try { abs = new URL(url, location.href).href; } catch (e) { /* оставим как есть */ }
+  if (/\.docx?$/i.test(url)) {
+    return '<p class="note">' + text + ': <a href="https://view.officeapps.live.com/op/view.aspx?src=' + encodeURIComponent(abs) + '" target="_blank" rel="noopener">открыть в браузере</a> · <a href="' + encodeURI(url) + '" download>скачать файл</a></p>';
+  }
+  return '<p class="note">' + text + ': <a href="' + encodeURI(url) + '" target="_blank" rel="noopener">открыть документ</a></p>';
+}
 
 /* ---------- экраны ---------- */
 async function welcome() {
   let banners = '';
-  if (TEST) banners += '<div class="banner">ТЕСТОВЫЙ РЕЖИМ: время показа сокращено, данные никуда не отправляются.</div>';
+  if (TEST) banners += '<div class="banner">ТЕСТОВЫЙ РЕЖИМ: данные никуда не отправляются.</div>';
   if (!TEST && CONFIG.ENDPOINT.indexOf('PASTE') === 0) banners += '<div class="banner">Внимание (для исследователя): адрес для сохранения данных не настроен, ответы не будут отправлены.</div>';
-  if (window.innerWidth < CONFIG.MIN_SCREEN_WIDTH) {
-    await page('too_small', banners + '<h1>Оценка фотографий</h1><p>Для участия нужен компьютер или ноутбук с достаточно широким экраном. Пожалуйста, откройте эту страницу на компьютере.</p>', () => {});
-    return new Promise(() => {});
-  }
-  const n = ids.main.length + ids.anchors.length + ids.warm.length;
+  const n = ids.main.length + ids.anchors.length;
   await page('welcome', banners +
     '<h1>Оценка фотографий</h1>' +
     '<h2>Описание исследования</h2>' +
-    '<p>Мы изучаем, как люди воспринимают и оценивают фотографии. Вам будет показано около ' + n + ' фотографий. Каждую нужно оценить по двум шкалам: насколько она приятна или неприятна и насколько сильную эмоциональную реакцию вызывает.</p>' +
-    '<p><b>Что понадобится:</b> компьютер или ноутбук, около 20 минут свободного времени и спокойная обстановку, в которой вас никто не отвлекает.</p>' +
-    '<p><b>Как это проходит:</b> перед началом вы ознакомитесь с условиями участия и дадите согласие, ответите на несколько вопросов о себе, прочитаете инструкцию и пройдёте короткую пробную часть. Затем будет основная часть с небольшими перерывами.</p>' +
-    '<p>Участие добровольное, имя не требуется: достаточно любого никнейма. Результаты используются только в научных целях и публикуются в обобщённом виде.</p>' +
-    docLink(CONFIG.CONSENT_URL, 'Полный текст согласия на участие и обработку данных') +
+    '<p>Мы изучаем, как люди воспринимают и оценивают фотографии. Вам будет показано ' + n + ' фотографий. Каждую нужно оценить по двум шкалам: насколько она приятна или неприятна и насколько сильную эмоциональную реакцию вызывает.</p>' +
+    '<p><b>Что понадобится:</b> компьютер или ноутбук, подойдёт и телефон. Около 15–20 минут свободного времени и спокойная обстановка, в которой вас никто не отвлекает.</p>' +
+    '<p><b>Как это проходит:</b> перед началом вы ознакомитесь с условиями участия и дадите согласие, ответите на несколько вопросов о себе и прочитаете инструкцию. Затем вам по очереди будут показаны фотографии, каждую нужно оценить. Будут небольшие перерывы.</p>' +
+    '<p>Участие добровольное. ' + ANON + '</p>' +
+    docLink(CONFIG.CONSENT_URL, 'Полный текст согласия') +
     '<div class="row"><button class="primary" id="go">Перейти к согласию</button></div>',
     (n2, res) => { n2.querySelector('#go').onclick = () => res(); });
 }
@@ -299,10 +303,11 @@ async function consentParticipation() {
     '<h2>Информация об исследовании и согласие на участие</h2>' +
     '<p><b>Кто проводит:</b> ' + CONFIG.RESEARCHER + ', ' + CONFIG.ORGANIZATION + '. Вопросы: ' + CONFIG.CONTACT_EMAIL + '.</p>' +
     '<p><b>О чём исследование:</b> мы изучаем, как люди воспринимают и оценивают фотографии.</p>' +
-    '<p><b>Что нужно делать:</b> вам будут показаны фотографии (каждая по 3 секунды). После каждой нужно оценить её по двум шкалам. Для некоторых картинок мы попросим по желанию написать несколько слов. Будут короткие перерывы. Примерная длительность: 20 минут. Правильных и неправильных ответов нет, важно ваше личное впечатление.</p>' +
+    '<p><b>Что нужно делать:</b> вам будут показаны фотографии, по одной. Каждая остаётся на экране, пока вы отвечаете, время не ограничено. Нужно оценить её по двум шкалам: насколько она приятна или неприятна и насколько сильную эмоциональную реакцию вызывает. Для некоторых фотографий можно по желанию написать несколько слов. Будут короткие перерывы. Примерная длительность: 15–20 минут. Правильных и неправильных ответов нет, важно ваше личное впечатление. Мы фиксируем, сколько времени вы тратите на каждую фотографию.</p>' +
     '<p><b>Содержание:</b> в основном это обычные бытовые фотографии, но некоторые могут показаться вам неприятными (умеренно).</p>' +
     '<p><b>Добровольность:</b> участие добровольное. Вы можете прекратить его в любой момент, просто закрыв страницу, без объяснения причин и без последствий. Ответы, если вы не дошли до конца, в анализе не используются.</p>' +
-    '<p><b>Конфиденциальность:</b> имя не запрашивается, достаточно любого никнейма. Результаты публикуются только в обобщённом виде. Страница размещена на GitHub Pages: по правилам GitHub он может записывать технические данные посетителей (в том числе IP-адреса) для безопасности. Это происходит независимо от исследователей.</p>' +
+    '<p><b>Конфиденциальность:</b> ' + ANON + ' Если в конце вы по желанию оставите контакт для приглашений в другие исследования, он хранится отдельно от ответов, без кода участника.</p>' +
+    '<p class="muted">Страница размещена на публичном хостинге, который по своим правилам может фиксировать технические данные посетителей (например, IP-адрес). Эти данные находятся вне контроля исследователей.</p>' +
     '<p class="muted">Вопросы об этической стороне: ' + CONFIG.ETHICS_CONTACT + '.</p>' +
     docLink(CONFIG.CONSENT_URL, 'Полный текст согласия') +
     '<label class="check"><input type="checkbox" id="c"> <span>Мне ' + CONFIG.MIN_AGE + ' лет или больше, я прочитал(а) эту информацию и полный текст согласия и согласен(на) участвовать в исследовании.</span></label>' +
@@ -317,17 +322,16 @@ async function consentParticipation() {
 
 async function consentData() {
   return page('consent_data',
-    '<h2>Согласие на обработку персональных данных</h2>' +
+    '<h2>Согласие на обработку данных</h2>' +
     '<p class="muted">Этот документ отделён от согласия на участие. Вы можете не давать его, тогда принять участие будет нельзя.</p>' +
     '<p><b>Оператор:</b> ' + CONFIG.ORGANIZATION + '. Контакт: ' + CONFIG.CONTACT_EMAIL + '.</p>' +
     '<p><b>Цель обработки:</b> проведение научного исследования в области психологии восприятия.</p>' +
-    '<p><b>Какие данные:</b> никнейм, пол, возраст, страна, где вы выросли, родной язык, самооценка настроения, особенности зрения, ваши оценки и ответы в исследовании, время ответов на страницах, размер экрана. Если вы в конце оставите контакт для связи, он сохраняется отдельно (см. ниже). В свободных ответах не пишите имена и личную информацию.</p>' +
+    '<p><b>Какие данные:</b> никнейм (любой, не настоящее имя), пол, возраст, ваши оценки и ответы в исследовании, время, затраченное на ответы, размер экрана. ' + ANON + ' Если в конце вы по желанию оставите контакт для приглашений в другие исследования, он сохраняется отдельно от ответов, без кода участника. В свободных ответах не пишите имена и личную информацию.</p>' +
     '<p><b>Действия с данными:</b> сбор, запись, хранение, анализ, обезличивание, удаление.</p>' +
     '<p><b>Срок:</b> ' + CONFIG.RETENTION + '. После этого данные удаляются или остаются только в обезличенном виде.</p>' +
-    '<p><b>Передача третьим лицам и хранение:</b> ответы записываются в сервис Google Таблицы (Google LLC), серверы которого могут находиться за пределами вашей страны. Страница размещена на GitHub Pages (GitHub, Inc.).</p>' +
     '<p><b>Отзыв согласия:</b> в любой момент письмом на ' + CONFIG.CONTACT_EMAIL + ' с указанием вашего кода (он будет показан в конце). Если по коду можно найти ваши ответы, они будут удалены. Без кода найти и удалить ответы невозможно.</p>' +
     docLink(CONFIG.CONSENT_DATA_URL, 'Полный текст согласия на обработку данных') +
-    '<label class="check"><input type="checkbox" id="c"> <span>Я прочитал(а) текст согласия и даю согласие на обработку моих персональных данных на указанных условиях.</span></label>' +
+    '<label class="check"><input type="checkbox" id="c"> <span>Я прочитал(а) текст согласия и даю согласие на обработку данных на указанных условиях.</span></label>' +
     '<div class="row"><button class="primary" id="go" disabled>Продолжить</button><button id="no">Не согласен(на)</button></div>',
     (n, res) => {
       const c = n.querySelector('#c'), go = n.querySelector('#go');
@@ -352,25 +356,20 @@ function ageDenied() {
 async function demographics() {
   return page('demographics',
     '<h2>Несколько вопросов о вас</h2>' +
-    '<div class="field"><label for="nick">Имя или никнейм</label><input id="nick" type="text" maxlength="40" autocomplete="off" placeholder="любой, можно даже один символ">' +
-      '<div class="muted">Он нужен только для того, чтобы отличать участников друг от друга. Настоящее имя указывать не обязательно.</div></div>' +
+    '<div class="field"><label for="nick">Никнейм</label><input id="nick" type="text" maxlength="40" autocomplete="off" placeholder="любой, можно даже один символ">' +
+      '<div class="muted">Он нужен только для того, чтобы отличать участников друг от друга. Настоящее имя указывать не нужно.</div></div>' +
     '<div class="field"><label for="gender">Пол</label><select id="gender"><option value="">— выберите —</option><option>женский</option><option>мужской</option></select></div>' +
     '<div class="field"><label for="age">Возраст (полных лет)</label><input id="age" type="number" min="1" max="120" inputmode="numeric"></div>' +
-    '<div class="field"><label for="country">В какой стране вы выросли?</label><input id="country" type="text" maxlength="60" placeholder="можно не отвечать"></div>' +
-    '<div class="field"><label for="lang">Родной язык</label><input id="lang" type="text" maxlength="60" placeholder="можно не отвечать"></div>' +
-    '<div class="field"><label for="mood">Как вы себя чувствуете прямо сейчас? (1 — очень плохо, 9 — очень хорошо)</label><select id="mood"><option value="">— выберите —</option>' +
-      [1,2,3,4,5,6,7,8,9].map(i => '<option>' + i + '</option>').join('') + '</select></div>' +
-    '<div class="field"><label for="vision">Зрение</label><select id="vision"><option value="">— выберите —</option><option>нормальное</option><option>с коррекцией (очки, линзы), сейчас ношу</option><option>с коррекцией, но сейчас без неё</option><option>нарушение цветового зрения</option><option>другое</option></select></div>' +
     '<p class="err" id="err"></p>' +
     '<div class="row"><button class="primary" id="go">Продолжить</button></div>',
     (n, res) => {
       n.querySelector('#go').onclick = () => {
         const g = id => n.querySelector('#' + id).value.trim();
         const age = parseInt(g('age'), 10);
-        if (!g('nick') || !g('gender') || !g('mood') || !g('vision') || isNaN(age)) { n.querySelector('#err').textContent = 'Пожалуйста, заполните никнейм, пол, возраст, настроение и зрение.'; return; }
+        if (!g('nick') || !g('gender') || isNaN(age)) { n.querySelector('#err').textContent = 'Пожалуйста, заполните никнейм, пол и возраст.'; return; }
         if (age < CONFIG.MIN_AGE) { ageDenied(); return; }
         if (age > 99) { n.querySelector('#err').textContent = 'Проверьте возраст.'; return; }
-        res({ nickname: g('nick'), gender: g('gender'), age: age, country_grew_up: g('country'), native_language: g('lang'), mood: Number(g('mood')), vision: g('vision') });
+        res({ nickname: g('nick'), gender: g('gender'), age: age });
       };
     });
 }
@@ -378,19 +377,18 @@ async function demographics() {
 async function instructions(isRepeat) {
   await page('instructions',
     '<h2>' + (isRepeat ? 'Повторное прохождение' : 'Как проходит исследование') + '</h2>' +
-    (isRepeat ? '<p class="note">Вы проходите исследование ещё раз. Порядок картинок будет другим. Ваше согласие и ответы на вопросы о себе остаются прежними.</p>' : '') +
-    '<p>Во время эксперимента вам будут показаны фотографии. <b>Ваша задача: оценить, какие чувства вызывает у вас каждая картинка, то есть насколько она приятна или неприятна и насколько сильную эмоциональную реакцию вызывает.</b></p>' +
-    '<p>Сначала на полсекунды появится крестик, затем фотография (на ' + (CONFIG.STIM_MS / 1000) + ' секунды). После этого фотография исчезнет, и вы ответите на два вопроса, выбрав число от 1 до 9:</p>' +
-    '<ul><li><b>Приятность:</b> хорошо или плохо вам от этой картинки. От «очень неприятная» (1) до «очень приятная» (9); 5 означает «ни приятная, ни неприятная».</li>' +
+    (isRepeat ? '<p class="note">Вы проходите исследование ещё раз. Порядок фотографий будет другим. Ваше согласие и ответы на вопросы о себе остаются прежними.</p>' : '') +
+    '<p>Во время эксперимента вам будут показаны фотографии, по одной. <b>Ваша задача: оценить, какие чувства вызывает у вас каждая фотография, то есть насколько она приятна или неприятна и насколько сильную эмоциональную реакцию вызывает.</b></p>' +
+    '<p>Фотография остаётся на экране, пока вы отвечаете: рядом с ней (на телефоне под ней) будут два вопроса, на каждый нужно выбрать число от 1 до 9. Затем нажмите «Далее».</p>' +
+    '<ul><li><b>Приятность:</b> хорошо или плохо вам от этой фотографии. От «очень неприятная» (1) до «очень приятная» (9); 5 означает «ни приятная, ни неприятная».</li>' +
     '<li><b>Сила эмоциональной реакции:</b> насколько сильное чувство она вызывает, неважно, приятное или неприятное. От «совершенно спокойно» (1) до «очень сильная реакция» (9).</li></ul>' +
     '<p>Эти два вопроса не зависят друг от друга. Например:</p>' +
     '<table class="ex"><tr><th></th><th>Слабая реакция</th><th>Сильная реакция</th></tr>' +
     '<tr><th>Приятно</th><td>тёплая чашка чая, спокойный вечер</td><td>долгожданная радостная новость</td></tr>' +
     '<tr><th>Неприятно</th><td>скучная очередь, лёгкая досада</td><td>внезапная опасность, сильный испуг</td></tr></table>' +
-    '<p>Правильных и неправильных ответов нет: нас интересует ваше личное впечатление. Смотрите на картинки так, как смотрели бы обычно, и отвечайте так, как подсказывает первое впечатление: без долгих раздумий, но и без спешки. Любое значение на шкале, в том числе среднее, является полноценным ответом.</p>' +
-    '<p>Для некоторых картинок вас попросят по желанию написать 1–3 слова: о чём она вам напомнила. Не пишите имена и личные данные.</p>' +
-    '<p>' + ((!isRepeat && ids.warm.length) ? 'Сначала будут ' + ids.warm.length + ' пробные картинки. ' : '') + 'Перерыв после каждых ' + CONFIG.BREAK_EVERY + ' картинок.</p>' +
-    '<div class="row"><button class="primary" id="go">Загрузить картинки и начать</button></div>',
+    '<p>Правильных и неправильных ответов нет: нас интересует ваше личное впечатление. Время на ответ не ограничено, мы лишь фиксируем, сколько его уходит на каждую фотографию. Любое значение на шкале, в том числе среднее, является полноценным ответом.</p>' +
+    '<p>Для некоторых фотографий появится дополнительное поле: по желанию напишите 1–3 слова о том, что она вам напомнила. Не пишите имена и личные данные. Перерыв будет после каждых ' + CONFIG.BREAK_EVERY + ' фотографий.</p>' +
+    '<div class="row"><button class="primary" id="go">Загрузить фотографии и начать</button></div>',
     (n, res) => { n.querySelector('#go').onclick = () => res(); });
 }
 
@@ -415,81 +413,53 @@ async function preload(list) {
   return missing;
 }
 
-/* ---------- проба ---------- */
+/* ---------- проба: фото и шкалы на одной странице, без ограничения времени ---------- */
 function scaleHtml(key, left, mid, right) {
   let b = ''; for (let i = 1; i <= 9; i++) b += '<button type="button" class="sc" data-k="' + key + '" data-v="' + i + '">' + i + '</button>';
   return '<div class="scale">' + b + '</div><div class="labels"><span>' + left + '</span><span>' + mid + '</span><span>' + right + '</span></div>';
 }
-async function showFixation(id, pos) { setScreen(el('<div class="stage"><div class="fix">+</div></div>'), true, 'fixation', id, pos); await sleep(CONFIG.FIXATION_MS); }
-async function showStimulus(id, pos) {
-  const n = el('<div class="stage"><img class="stim" alt=""></div>');
-  n.querySelector('img').src = cache.get(id).src;
-  setScreen(n, true, 'stimulus', id, pos);
-  await nextFrame();
-  const t = nowMs();
-  await sleep(CONFIG.STIM_MS);
-  return Math.round(nowMs() - t);
-}
-function rate(info, id, pos) {
+function trialPage(info, id, pos, askAssoc) {
   return new Promise(resolve => {
-    const n = el('<div class="card wide"><div class="prog">' + info + '</div>' +
-      '<div class="q"><p class="qt">1. Насколько приятной или неприятной вам кажется эта картинка?</p>' + scaleHtml('v', '1 — очень неприятная', '5 — нейтральная', '9 — очень приятная') + '</div>' +
-      '<div class="q"><p class="qt">2. Насколько сильную эмоциональную реакцию вызывает у вас эта картинка?</p>' + scaleHtml('a', '1 — совершенно спокойно', '', '9 — очень сильная реакция') +
-      '<p class="muted" style="margin-top:8px">Оцените именно силу реакции, а не то, нравится ли вам картинка.</p></div>' +
-      '<div class="row"><button class="primary" id="next" disabled>Далее</button></div></div>');
-    setScreen(n, false, 'rating', id, pos);
+    const n = el('<div class="card xwide"><div class="prog">' + info + '</div><div class="trial">' +
+      '<div class="pic"><img alt=""></div><div class="qs">' +
+      '<div class="q"><p class="qt">1. Насколько приятной или неприятной вам кажется эта фотография?</p>' + scaleHtml('v', '1 — очень неприятная', '5 — нейтральная', '9 — очень приятная') + '</div>' +
+      '<div class="q"><p class="qt">2. Насколько сильную эмоциональную реакцию вызывает у вас эта фотография?</p>' + scaleHtml('a', '1 — совершенно спокойно', '', '9 — очень сильная реакция') +
+      '<p class="muted" style="margin-top:8px">Оцените именно силу реакции, а не то, нравится ли вам фотография.</p></div>' +
+      (askAssoc ? '<div class="q"><p class="qt">3. По желанию: какие слова или образы приходят вам в голову?</p><p class="muted">Напишите 1–3 слова. Можно оставить пустым. Не пишите имена и личные данные.</p><div class="field"><input id="t" type="text" maxlength="100" autocomplete="off"></div></div>' : '') +
+      '<div class="row"><button class="primary" id="next" disabled>Далее</button></div></div></div></div>');
+    n.querySelector('img').src = cache.get(id).src;
+    setScreen(n, false, 'trial', id, pos);
     const R = { v: null, a: null, rt_v: null, rt_a: null };
-    let t0 = nowMs(); requestAnimationFrame(() => { t0 = nowMs(); });
+    const t0 = nowMs();                       // отсчёт времени: с момента показа страницы с фотографией
     n.querySelectorAll('.sc').forEach(b => b.onclick = () => {
       const k = b.dataset.k, v = Number(b.dataset.v);
-      if (R['rt_' + k] === null) R['rt_' + k] = Math.round(nowMs() - t0);
+      if (R['rt_' + k] === null) R['rt_' + k] = Math.round(nowMs() - t0);   // время до первого выбора на шкале
       R[k] = v;
       n.querySelectorAll('.sc[data-k="' + k + '"]').forEach(x => x.classList.toggle('sel', x === b));
       n.querySelector('#next').disabled = !(R.v !== null && R.a !== null);
     });
-    n.querySelector('#next').onclick = () => resolve({ v: R.v, a: R.a, rt_v: R.rt_v, rt_a: R.rt_a, rt_total: Math.round(nowMs() - t0) });
+    n.querySelector('#next').onclick = () => {
+      const t = n.querySelector('#t');
+      resolve({ v: R.v, a: R.a, rt_v: R.rt_v, rt_a: R.rt_a, rt_total: Math.round(nowMs() - t0), assoc: t ? t.value.trim() : '' });
+    };
   });
-}
-function association(id, pos) {
-  return new Promise(resolve => {
-    const n = el('<div class="card"><img class="thumb" alt="">' +
-      '<p class="qt">Какие слова или образы приходят вам в голову, глядя на эту картинку?</p>' +
-      '<p class="muted">Напишите 1–3 слова. Это необязательно, можно оставить пустым. Не пишите имена и личные данные.</p>' +
-      '<div class="field"><input id="t" type="text" maxlength="100" autocomplete="off"></div>' +
-      '<div class="row"><button class="primary" id="next">Далее</button></div></div>');
-    n.querySelector('img').src = cache.get(id).src;
-    setScreen(n, false, 'association', id, pos);
-    const t = n.querySelector('#t'); t.focus();
-    const done = () => resolve(t.value.trim());
-    n.querySelector('#next').onclick = done;
-    t.addEventListener('keydown', e => { if (e.key === 'Enter') done(); });
-  });
-}
-function attentionCheck(index, target) {
-  return page('attention_' + index, '<h2>Проверка внимания</h2><p>Чтобы показать, что вы читаете инструкции, выберите на шкале ниже число <b>' + target + '</b>.</p>' +
-    '<div class="scale">' + [1,2,3,4,5,6,7,8,9].map(i => '<button type="button" class="sc" data-v="' + i + '">' + i + '</button>').join('') + '</div>',
-    (n, res) => { n.querySelectorAll('.sc').forEach(b => b.onclick = () => { S.attn.push({ index: index, target: target, chosen: Number(b.dataset.v) }); res(); }); });
 }
 function breakScreen(done, total) {
-  return page('break_' + done, '<h2>Небольшой перерыв</h2><p>Вы оценили ' + done + ' из ' + total + ' картинок. Отдохните, и когда будете готовы, нажмите кнопку.</p><div class="row"><button class="primary" id="go">Продолжить</button></div>',
+  return page('break_' + done, '<h2>Небольшой перерыв</h2><p>Вы оценили ' + done + ' из ' + total + ' фотографий. Отдохните, и когда будете готовы, нажмите кнопку.</p><div class="row"><button class="primary" id="go">Продолжить</button></div>',
     (n, res) => { n.querySelector('#go').onclick = () => res(); });
 }
 async function runTrial(id, phase, position, askAssoc, info) {
-  await showFixation(id, position);
-  const actual = await showStimulus(id, position);
-  const r = await rate(info, id, position);
-  let assoc = '';
-  if (askAssoc) assoc = await association(id, position);
+  const r = await trialPage(info, id, position, askAssoc);
   S.unsent.push({
     participant: runId(), attempt: S.attempt, phase: phase, position: position, image: id, image_type: imageType(id),
     valence: r.v, arousal: r.a, rt_valence_ms: r.rt_v, rt_arousal_ms: r.rt_a, rt_total_ms: r.rt_total,
-    assoc_asked: askAssoc ? 1 : 0, association: assoc, stim_ms: CONFIG.STIM_MS, stim_actual_ms: actual, client_time: new Date().toISOString()
+    assoc_asked: askAssoc ? 1 : 0, association: r.assoc, client_time: new Date().toISOString()
   });
 }
 
 /* ---------- финал: пояснение, контакт, повтор ---------- */
 function downloadFallback() {
-  const blob = new Blob([JSON.stringify({ participant: runId(), rows: S.unsent, pages: S.unsentPages, demo: S.demo, attn: S.attn }, null, 1)], { type: 'application/json' });
+  const blob = new Blob([JSON.stringify({ participant: runId(), rows: S.unsent, pages: S.unsentPages, demo: S.demo }, null, 1)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   return '<div class="banner">Не удалось отправить ответы автоматически (возможно, нет связи). Пожалуйста, скачайте файл и отправьте его на ' + CONFIG.CONTACT_EMAIL +
     '.<br><a download="answers_' + runId() + '.json" href="' + url + '">Скачать файл с ответами</a></div>';
@@ -541,47 +511,34 @@ function endScreen(ok) {
 async function runExperiment(isRepeat) {
   await instructions(isRepeat);
 
-  const all = [].concat(ids.main, ids.anchors, ids.warm);
+  const all = [].concat(ids.main, ids.anchors);
   const missing = await preload(all);
   if (missing.length) {
-    setScreen(el('<div class="card"><h2>Не удалось загрузить картинки</h2><p>Проверьте соединение и обновите страницу. Если ошибка повторяется, сообщите исследователю (' + CONFIG.CONTACT_EMAIL + ').</p><p class="muted">Не найдено: ' + missing.slice(0, 10).join(', ') + (missing.length > 10 ? ' …' : '') + '</p></div>'), false, 'preload_error');
+    setScreen(el('<div class="card"><h2>Не удалось загрузить фотографии</h2><p>Проверьте соединение и обновите страницу. Если ошибка повторяется, сообщите исследователю (' + CONFIG.CONTACT_EMAIL + ').</p><p class="muted">Не найдено: ' + missing.slice(0, 10).join(', ') + (missing.length > 10 ? ' …' : '') + '</p></div>'), false, 'preload_error');
     return new Promise(() => {});
   }
 
-  S.active = true; S.attn = []; S.trialsSent = 0; S.tStart = new Date();
+  S.active = true; S.trialsSent = 0; S.tStart = new Date();
 
-  // 1) разминка (только при первом прохождении): фиксированный порядок, в анализ не входит
-  if (!isRepeat && ids.warm.length) {
-    for (let i = 0; i < ids.warm.length; i++) await runTrial(ids.warm[i], 'practice', 0, false, 'Пробная картинка ' + (i + 1) + ' из ' + ids.warm.length);
-    await page('practice_done', '<h2>Разминка закончена</h2><p>Теперь начинается основная часть. Задание то же самое.</p><div class="row"><button class="primary" id="go">Начать</button></div>', (n, res) => { n.querySelector('#go').onclick = () => res(); });
-  }
-
-  // 2) основная часть: основные и якорные картинки в случайном порядке для каждого прохождения
-  const seq = shuffle([].concat(ids.main, ids.anchors));
+  // все фотографии в случайном порядке (свой порядок у каждого прохождения)
+  const seq = shuffle(all);
   const assocSet = new Set(sample(ids.main, Math.min(CONFIG.N_ASSOC, ids.main.length)));
-  const attnTargets = [2, 8];
   for (let i = 0; i < seq.length; i++) {
-    await runTrial(seq[i], 'main', i + 1, assocSet.has(seq[i]), 'Картинка ' + (i + 1) + ' из ' + seq.length);
+    await runTrial(seq[i], 'main', i + 1, assocSet.has(seq[i]), 'Фотография ' + (i + 1) + ' из ' + seq.length);
     const done = i + 1;
-    const k = CONFIG.ATTENTION_AFTER.indexOf(done);
-    if (k !== -1) await attentionCheck(k + 1, attnTargets[k % attnTargets.length]);
     if (done % CONFIG.BREAK_EVERY === 0 && done < seq.length) {
       await flush();
       await breakScreen(done, seq.length);
     }
   }
 
-  // 3) итоговая строка участника и отправка
-  const attnOk = S.attn.filter(a => a.chosen === a.target).length;
+  // итоговая строка участника и отправка
   const end = new Date();
-  const A = i => S.attn[i] || {};
   const prow = {
     participant: runId(), person_code: S.pid, attempt: S.attempt, nickname: S.nickname,
     start_time: S.tStart.toISOString(), end_time: end.toISOString(), duration_s: Math.round((end - S.tStart) / 1000),
-    gender: S.demo.gender, age: S.demo.age, country_grew_up: S.demo.country_grew_up, native_language: S.demo.native_language,
-    mood: S.demo.mood, vision: S.demo.vision,
-    attn1_target: A(0).target, attn1_chosen: A(0).chosen, attn2_target: A(1).target, attn2_chosen: A(1).chosen,
-    attn_correct_total: attnOk, screen_w: S.screenW, screen_h: S.screenH, n_trials_sent: S.trialsSent + S.unsent.length,
+    gender: S.demo.gender, age: S.demo.age,
+    screen_w: S.screenW, screen_h: S.screenH, n_trials_sent: S.trialsSent + S.unsent.length,
     consent_participation_at: S.consentAt.participation, consent_data_at: S.consentAt.data, version: CONFIG.VERSION
   };
   setScreen(el('<div class="card"><h2>Сохраняем ответы…</h2><p class="muted">Пожалуйста, не закрывайте страницу.</p></div>'), false, 'saving');
