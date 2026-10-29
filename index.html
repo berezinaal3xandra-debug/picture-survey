@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -76,10 +75,11 @@
    Всё, что в [квадратных скобках], нужно заменить своим текстом.
    ===================================================================== */
 const CONFIG = {
-  ENDPOINT: "https://script.google.com/macros/s/AKfycbxCAHpE39N48w5mO0AeU16t9a7HiQTVq5msgL6kSA11sg6OK1wIXzbJ1S2Me1NCHWcRTw/exec",      // адрес веб-приложения Google Apps Script (оканчивается на /exec)
+  ENDPOINT: "https://script.google.com/macros/s/AKfycbxpGRalqZSCnzfBfZAohW4co-i0Cdh2Z4sLq85ht1_T_WvCNK_uH24W_5R_ElEUN54nlg/exec",      // адрес веб-приложения Google Apps Script (оканчивается на /exec)
   RESEARCHER: "Березина Александра",
   ORGANIZATION: "МГЛУ",
   CONTACT_EMAIL: "berezina.al3xandra@gmail.com",
+
 
   // Ссылки на документ(ы) согласия. Файл загрузите в репозиторий рядом с index.html.
   // Если файл .docx: на странице будут две ссылки: «открыть в браузере» (онлайн-просмотр Office) и «скачать файл».
@@ -159,10 +159,11 @@ const CONFIG = {
   N_POS: 0, N_NEG: 0, N_NEU: 0,
 
   BREAK_EVERY: 15,              // перерыв после каждых N картинок
+  N_ASSOC: 12,                  // для скольких картинок показывать необязательное поле «ассоциации» (0 = нигде)
   MIN_AGE: 18,
 
   ALLOW_REPEAT: true,           // кнопка «Пройти ещё раз» в конце
-  ASK_CONTACT: true,            // в конце спросить, готов ли человек участвовать в других исследованиях, и собрать контакт
+  ASK_CONTACT: false,            // в конце спросить, готов ли человек участвовать в других исследованиях, и собрать контакт
   LINK_CONTACT_TO_CODE: false,  // false: контакт хранится отдельно и НЕ связан с ответами; true: рядом пишется код участника
   VERSION: "1.4"
 };
@@ -288,53 +289,36 @@ async function welcome() {
   const n = ids.main.length + ids.anchors.length;
   await page('welcome', banners +
     '<h1>Оценка фотографий</h1>' +
-    '<h2>Описание исследования</h2>' +
-    '<p>Мы изучаем, как люди воспринимают и оценивают фотографии. Вам будет показано ' + n + ' фотографий. Каждую нужно оценить по двум шкалам: насколько она приятна или неприятна и насколько сильную эмоциональную реакцию вызывает.</p>' +
-    '<p><b>Что понадобится:</b> компьютер или ноутбук, подойдёт и телефон. Около 15–20 минут свободного времени и спокойная обстановка, в которой вас никто не отвлекает.</p>' +
-    '<p><b>Как это проходит:</b> перед началом вы ознакомитесь с условиями участия и дадите согласие, ответите на несколько вопросов о себе и прочитаете инструкцию. Затем вам по очереди будут показаны фотографии, каждую нужно оценить. Будут небольшие перерывы.</p>' +
-    '<p>Участие добровольное. ' + ANON + '</p>' +
-    docLink(CONFIG.CONSENT_URL, 'Полный текст согласия') +
-    '<div class="row"><button class="primary" id="go">Перейти к согласию</button></div>',
+    '<p>Вам будет показано ' + n + ' фотографий, по одной. Каждую нужно оценить по двум шкалам: насколько она приятна или неприятна и насколько сильную эмоциональную реакцию вызывает. Для некоторых фотографий можно по желанию написать несколько слов. Правильных и неправильных ответов нет, важно ваше личное впечатление. Время на ответ не ограничено, но мы фиксируем, сколько его уходит на каждую фотографию.</p>' +
+    '<p>Понадобится компьютер, ноутбук или телефон и около 15–20 минут. Будут короткие перерывы.</p>' +
+    '<p class="muted">Некоторые фотографии могут показаться вам неприятными (умеренно). Участие добровольное, прекратить его можно в любой момент, закрыв страницу.</p>' +
+    '<div class="row"><button class="primary" id="go">Далее</button></div>',
     (n2, res) => { n2.querySelector('#go').onclick = () => res(); });
 }
 
-async function consentParticipation() {
-  return page('consent_participation',
-    '<h2>Информация об исследовании и согласие на участие</h2>' +
-    '<p><b>Кто проводит:</b> ' + CONFIG.RESEARCHER + ', ' + CONFIG.ORGANIZATION + '. Вопросы: ' + CONFIG.CONTACT_EMAIL + '.</p>' +
-    '<p><b>О чём исследование:</b> мы изучаем, как люди воспринимают и оценивают фотографии.</p>' +
-    '<p><b>Что нужно делать:</b> вам будут показаны фотографии, по одной. Каждая остаётся на экране, пока вы отвечаете, время не ограничено. Нужно оценить её по двум шкалам: насколько она приятна или неприятна и насколько сильную эмоциональную реакцию вызывает. После каждой картинки вы сможете по желанию написать несколько слов или образов, которые пришли вам в голову. Это необязательно: поле можно оставить пустым и продолжить. Будут короткие перерывы. Примерная длительность: 15–20 минут. Правильных и неправильных ответов нет, важно ваше личное впечатление. Мы фиксируем, сколько времени вы тратите на каждую фотографию.</p>' +
-    '<p><b>Содержание:</b> в основном это обычные бытовые фотографии, но некоторые могут показаться вам неприятными (умеренно).</p>' +
-    '<p><b>Добровольность:</b> участие добровольное. Вы можете прекратить его в любой момент, просто закрыв страницу, без объяснения причин и без последствий. Ответы, если вы не дошли до конца, в анализе не используются.</p>' +
-    '<p><b>Конфиденциальность:</b> ' + ANON + ' Если в конце вы по желанию оставите контакт для приглашений в другие исследования, он хранится отдельно от ответов, без кода участника.</p>' +
-    '<p class="muted">Страница размещена на публичном хостинге, который по своим правилам может фиксировать технические данные посетителей (например, IP-адрес). Эти данные находятся вне контроля исследователей.</p>' +
-    docLink(CONFIG.CONSENT_URL, 'Полный текст согласия') +
-    '<label class="check"><input type="checkbox" id="c"> <span>Мне ' + CONFIG.MIN_AGE + ' лет или больше, я прочитал(а) эту информацию и полный текст согласия и согласен(на) участвовать в исследовании.</span></label>' +
+/* одна страница: документ согласия + две отметки */
+async function consent() {
+  const same = CONFIG.CONSENT_DATA_URL === CONFIG.CONSENT_URL;
+  return page('consent',
+    '<h2>Согласие на участие и на обработку персональных данных</h2>' +
+    '<p>Пожалуйста, прочитайте документ' + (same ? '' : 'ы') + ' и отметьте согласие.</p>' +
+    docLink(CONFIG.CONSENT_URL, same ? 'Документ согласия' : 'Согласие на участие') +
+    (same ? '' : docLink(CONFIG.CONSENT_DATA_URL, 'Согласие на обработку персональных данных')) +
+    '<ul>' +
+      '<li>Участие добровольное. Вы вправе отказаться от участия и прекратить его в любой момент, закрыв страницу, без объяснения причин и без каких-либо последствий.</li>' +
+      '<li>Данные собираются анонимно: имя, адрес электронной почты и другая информация, позволяющая установить личность участника, не запрашиваются.</li>' +
+      '<li>Собираются: никнейм (любой, не настоящее имя), номер телефона или e-mail, пол, возраст, ваши оценки фотографий, необязательные слова-ассоциации и время, затраченное на ответы.</li>' +
+      '<li>Все полученные данные хранятся в обезличенном виде и используются только в рамках научной работы, исследовательских публикаций, академических презентаций и конференций.</li>' +
+      '<li>Вы можете отозвать согласие в любой момент: в конце исследования вам будет показан код участника, по нему ваши ответы можно найти и удалить (обратитесь по адресу ' + CONFIG.CONTACT_EMAIL + ').</li>' +
+    '</ul>' +
+    '<label class="check"><input type="checkbox" id="c1"> <span>Мне ' + CONFIG.MIN_AGE + ' лет или больше, я прочитал(а) документ и согласен(на) участвовать в исследовании.</span></label>' +
+    '<label class="check"><input type="checkbox" id="c2"> <span>Я даю согласие на обработку персональных данных на условиях, указанных в документе.</span></label>' +
     '<div class="row"><button class="primary" id="go" disabled>Продолжить</button><button id="no">Не согласен(на)</button></div>',
     (n, res) => {
-      const c = n.querySelector('#c'), go = n.querySelector('#go');
-      c.onchange = () => { go.disabled = !c.checked; };
-      go.onclick = () => { S.consentAt.participation = new Date().toISOString(); res(true); };
-      n.querySelector('#no').onclick = () => res(false);
-    });
-}
-
-async function consentData() {
-  return page('consent_data',
-    '<h2>Согласие на обработку данных</h2>' +
-    '<p class="muted">Этот документ отделён от согласия на участие. Вы можете не давать его, тогда принять участие будет нельзя.</p>' +
-    '<p><b>Оператор:</b> ' + CONFIG.ORGANIZATION + '. Контакт: ' + CONFIG.CONTACT_EMAIL + '.</p>' +
-    '<p><b>Цель обработки:</b> проведение научного исследования в области психологии восприятия.</p>' +
-    '<p><b>Какие данные:</b> никнейм (любой, не настоящее имя), пол, возраст, ваши оценки и ответы в исследовании, время, затраченное на ответы, размер экрана. ' + ANON + ' Если в конце вы по желанию оставите контакт для приглашений в другие исследования, он сохраняется отдельно от ответов, без кода участника. В свободных ответах не пишите имена и личную информацию.</p>' +
-    '<p><b>Действия с данными:</b> сбор, запись, хранение, анализ, обезличивание, удаление.</p>' +
-    '<p><b>Отзыв согласия:</b> в любой момент письмом на ' + CONFIG.CONTACT_EMAIL + ' с указанием вашего кода (он будет показан в конце). Если по коду можно найти ваши ответы, они будут удалены. Без кода найти и удалить ответы невозможно.</p>' +
-    docLink(CONFIG.CONSENT_DATA_URL, 'Полный текст согласия на обработку данных') +
-    '<label class="check"><input type="checkbox" id="c"> <span>Я прочитал(а) текст согласия и даю согласие на обработку данных на указанных условиях.</span></label>' +
-    '<div class="row"><button class="primary" id="go" disabled>Продолжить</button><button id="no">Не согласен(на)</button></div>',
-    (n, res) => {
-      const c = n.querySelector('#c'), go = n.querySelector('#go');
-      c.onchange = () => { go.disabled = !c.checked; };
-      go.onclick = () => { S.consentAt.data = new Date().toISOString(); res(true); };
+      const c1 = n.querySelector('#c1'), c2 = n.querySelector('#c2'), go = n.querySelector('#go');
+      const upd = () => { go.disabled = !(c1.checked && c2.checked); };
+      c1.onchange = upd; c2.onchange = upd;
+      go.onclick = () => { const t = new Date().toISOString(); S.consentAt.participation = t; S.consentAt.data = t; res(true); };
       n.querySelector('#no').onclick = () => res(false);
     });
 }
@@ -356,6 +340,7 @@ async function demographics() {
     '<h2>Несколько вопросов о вас</h2>' +
     '<div class="field"><label for="nick">Никнейм</label><input id="nick" type="text" maxlength="40" autocomplete="off" placeholder="любой, можно даже один символ">' +
       '<div class="muted">Он нужен только для того, чтобы отличать участников друг от друга. Настоящее имя указывать не нужно.</div></div>' +
+    '<div class="field"><label for="contact">Номер телефона или e-mail</label><input id="contact" type="text" maxlength="80" autocomplete="off"></div>' +
     '<div class="field"><label for="gender">Пол</label><select id="gender"><option value="">— выберите —</option><option>женский</option><option>мужской</option></select></div>' +
     '<div class="field"><label for="age">Возраст (полных лет)</label><input id="age" type="number" min="1" max="120" inputmode="numeric"></div>' +
     '<p class="err" id="err"></p>' +
@@ -364,10 +349,10 @@ async function demographics() {
       n.querySelector('#go').onclick = () => {
         const g = id => n.querySelector('#' + id).value.trim();
         const age = parseInt(g('age'), 10);
-        if (!g('nick') || !g('gender') || isNaN(age)) { n.querySelector('#err').textContent = 'Пожалуйста, заполните никнейм, пол и возраст.'; return; }
+        if (!g('nick') || !g('contact') || !g('gender') || isNaN(age)) { n.querySelector('#err').textContent = 'Пожалуйста, заполните все поля.'; return; }
         if (age < CONFIG.MIN_AGE) { ageDenied(); return; }
         if (age > 99) { n.querySelector('#err').textContent = 'Проверьте возраст.'; return; }
-        res({ nickname: g('nick'), gender: g('gender'), age: age });
+        res({ nickname: g('nick'), contact_info: g('contact'), gender: g('gender'), age: age });
       };
     });
 }
@@ -385,7 +370,7 @@ async function instructions(isRepeat) {
     '<tr><th>Приятно</th><td>тёплая чашка чая, спокойный вечер</td><td>долгожданная радостная новость</td></tr>' +
     '<tr><th>Неприятно</th><td>скучная очередь, лёгкая досада</td><td>внезапная опасность, сильный испуг</td></tr></table>' +
     '<p>Правильных и неправильных ответов нет: нас интересует ваше личное впечатление. Время на ответ не ограничено, мы лишь фиксируем, сколько его уходит на каждую фотографию. Любое значение на шкале, в том числе среднее, является полноценным ответом.</p>' +
-    '<p>После каждой картинки вы сможете по желанию написать несколько слов или образов, которые пришли вам в голову. Это необязательно: поле можно оставить пустым и продолжить. Не пишите имена и личные данные. Перерыв будет после каждых ' + CONFIG.BREAK_EVERY + ' фотографий.</p>' +
+    '<p>Для некоторых фотографий появится дополнительное поле: по желанию напишите 1–3 слова о том, что она вам напомнила. Не пишите имена и личные данные. Перерыв будет после каждых ' + CONFIG.BREAK_EVERY + ' фотографий.</p>' +
     '<div class="row"><button class="primary" id="go">Загрузить фотографии и начать</button></div>',
     (n, res) => { n.querySelector('#go').onclick = () => res(); });
 }
@@ -520,7 +505,7 @@ async function runExperiment(isRepeat) {
 
   // все фотографии в случайном порядке (свой порядок у каждого прохождения)
   const seq = shuffle(all);
-  const assocSet = new Set(ids.main);
+  const assocSet = new Set(sample(ids.main, Math.min(CONFIG.N_ASSOC, ids.main.length)));
   for (let i = 0; i < seq.length; i++) {
     await runTrial(seq[i], 'main', i + 1, assocSet.has(seq[i]), 'Фотография ' + (i + 1) + ' из ' + seq.length);
     const done = i + 1;
@@ -535,7 +520,7 @@ async function runExperiment(isRepeat) {
   const prow = {
     participant: runId(), person_code: S.pid, attempt: S.attempt, nickname: S.nickname,
     start_time: S.tStart.toISOString(), end_time: end.toISOString(), duration_s: Math.round((end - S.tStart) / 1000),
-    gender: S.demo.gender, age: S.demo.age,
+    contact_info: S.demo.contact_info, gender: S.demo.gender, age: S.demo.age,
     screen_w: S.screenW, screen_h: S.screenH, n_trials_sent: S.trialsSent + S.unsent.length,
     consent_participation_at: S.consentAt.participation, consent_data_at: S.consentAt.data, version: CONFIG.VERSION
   };
@@ -546,8 +531,7 @@ async function runExperiment(isRepeat) {
 
 async function main() {
   await welcome();
-  if (!(await consentParticipation())) return declined();
-  if (!(await consentData())) return declined();
+  if (!(await consent())) return declined();
   S.demo = await demographics();
   S.nickname = S.demo.nickname;
   let again = await runExperiment(false);
