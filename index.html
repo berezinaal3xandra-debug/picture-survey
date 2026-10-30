@@ -75,7 +75,7 @@
    Всё, что в [квадратных скобках], нужно заменить своим текстом.
    ===================================================================== */
 const CONFIG = {
-  ENDPOINT: "https://script.google.com/macros/s/AKfycby6U9qHFHE9Kr0-Cr6Fv1IWzYWQhnvs2mNCTqChAOXirY4bbN09hvorEQGFHFwCteNOEA/exec",      // адрес веб-приложения Google Apps Script (оканчивается на /exec)
+  ENDPOINT: "https://script.google.com/macros/s/AKfycbzDlRaKqBUP1lVRd_W01C0jJlUQlAHmp6HVZYAfnp43sUwXaPPl1nYwaapy5dhJYVIEaQ/exec",      // адрес веб-приложения Google Apps Script (оканчивается на /exec)
   RESEARCHER: "Березина Александра",
   ORGANIZATION: "МГЛУ",
   CONTACT_EMAIL: "berezina.al3xandra@gmail.com",
@@ -89,75 +89,47 @@ const CONFIG = {
 
   IMG_DIR: "",                 // картинки лежат в корне репозитория, рядом с index.html (если будут в папке, напишите "images/")
   IMG_EXT: ".jpg",              // основное расширение; если файла нет, скрипт пробует ещё .jpeg, .png и варианты в верхнем регистре
-  // Ваши 60 картинок: имена файлов БЕЗ расширения (на сайте они лежат как <имя>.jpg).
+  // Ваши 32 картинки: имена файлов БЕЗ расширения (на сайте они лежат как <имя>.jpg).
   // Имена должны совпадать с файлами буква в букву, включая регистр.
   MAIN_IMAGES: [
-    "declan-sun-RZv4hCmoN0k-unsplash",
-    "declan-sun-YgNKHG8r8Zc-unsplash",
-    "frank-huang-AWA3T5dwp7Q-unsplash",
-    "joao-emanuel-tg8j8CF6JbQ-unsplash",
-    "karla-hernandez-shn9z-172sM-unsplash",
-    "leo-d-1o5hFRQ77l0-unsplash",
-    "mark-dixon-hLYbJB-D5Gg-unsplash",
-    "pexels-236636281-38420518",
-    "pexels-alexis-b-1699196-38549297",
-    "pexels-alexis-b-1699196-38721732",
-    "pexels-alina-lebedeva-2160623516-37190533",
-    "pexels-alion-n-2164306600-39614634",
-    "pexels-amina-redza-2158448108-38779756",
-    "pexels-anastasiiabilyk-29516991",
-    "pexels-antonio-mor-1058419054-20487856",
-    "pexels-bayram-yalcin-86843184-31516058",
     "pexels-clarence-chan-2160207969-36949785",
     "pexels-codrin-rusu-147523801-10474664",
     "pexels-damir-19117176",
     "pexels-danielwells67-39345915",
-    "pexels-danila-popov-85164195-9684917",
-    "pexels-deklansor-432236846-15259666",
-    "pexels-dmitry93-32114413",
-    "pexels-eva-al-1617171197-27914040",
-    "pexels-geoffrey-zhao-2157815655-36873767",
-    "pexels-heey-dilara-2154720417-36723258",
-    "pexels-humeyrakalkan-17276825",
-    "pexels-irrabagon-37036052",
-    "pexels-jan-van-der-wolf-11680885-14943866",
-    "pexels-jasper-hunter-692558448-31795331",
-    "pexels-jessikaarraes-39238778",
-    "pexels-m-e-r-v-e-42708268-16682066",
-    "pexels-manolyaizgigezgin-38086853",
-    "pexels-michael-koneckiy-461417719-20585270",
-    "pexels-mxkrv-3655916-11288345",
-    "pexels-natalia-sevruk-636238602-38141724",
-    "pexels-onbab-18313672",
-    "pexels-ozgarts-38390177",
-    "pexels-perry-2164439915-39820670",
-    "pexels-pixtelslinks-2164250203-39553625",
-    "pexels-ridvan-guler-536399736-36914851",
-    "pexels-robertkso-13992799",
-    "pexels-rok-galun-2164299005-39725703",
-    "pexels-roman-ska-3453281-9150882",
-    "pexels-samuelgoldberg-30445534",
-    "pexels-spitak-30181353",
-    "pexels-stelios-117223391-39635098",
-    "pexels-sveta-k-75705601-12486376",
-    "pexels-tess-h-312625-37942157",
+    "pexels-antonio-mor-1058419054-20487856",
+    "karla-hernandez-shn9z-172sM-unsplash",
+    "leo-d-1o5hFRQ77l0-unsplash",
+    "mark-dixon-hLYbJB-D5Gg-unsplash",
+    "declan-sun-YgNKHG8r8Zc-unsplash",
+    "yang-rui-wQkVPfw8vIk-unsplash",
+    "pexels-yuraforrat-11960629",
+    "pexels-yuraforrat-19928078",
+    "set-sj-s4n4QNPduZE-unsplash",
+    "sies-kranen-B69QZzfJCXg-unsplash",
     "pexels-tu-tr-n-2161865816-37920802",
     "pexels-valeria-drozdova-2148646707-35354687",
     "pexels-volokyta-18609840",
     "pexels-wal_-172619-2156618639-37535009",
     "pexels-yesimcolak-32993788",
-    "pexels-yuraforrat-11960629",
-    "pexels-yuraforrat-19928078",
-    "set-sj-s4n4QNPduZE-unsplash",
-    "sies-kranen-B69QZzfJCXg-unsplash",
-    "sijmen-van-hooff-spTIl-cAHq4-unsplash",
-    "yang-rui-wQkVPfw8vIk-unsplash"
+    "pexels-rok-galun-2164299005-39725703",
+    "pexels-roman-ska-3453281-9150882",
+    "pexels-samuelgoldberg-30445534",
+    "pexels-spitak-30181353",
+    "pexels-sveta-k-75705601-12486376",
+    "pexels-onbab-18313672",
+    "pexels-ridvan-guler-536399736-36914851",
+    "pexels-manolyaizgigezgin-38086853",
+    "pexels-humeyrakalkan-17276825",
+    "pexels-jan-van-der-wolf-11680885-14943866",
+    "pexels-deklansor-432236846-15259666",
+    "pexels-dmitry93-32114413",
+    "pexels-eva-al-1617171197-27914040"
   ],
   // Якорные картинки (необязательно). 0 = не использовать.
   // Если появятся, назовите файлы: anc_pos_01.jpg.., anc_neg_01.jpg.., anc_neu_01.jpg..
   N_POS: 0, N_NEG: 0, N_NEU: 0,
 
-  BREAK_EVERY: 15,              // перерыв после каждых N картинок
+  BREAK_EVERY: 16,              // перерыв после каждых N картинок
   MIN_AGE: 18,
 
   ALLOW_REPEAT: true,           // кнопка «Пройти ещё раз» в конце
@@ -288,7 +260,7 @@ async function welcome() {
   await page('welcome', banners +
     '<h1>Оценка фотографий</h1>' +
     '<p>Вам будет показано ' + n + ' фотографий по одной. Каждую нужно оценить по двум шкалам: эмоциональная окраска (насколько приятно или неприятно смотреть на фотографию) и сила эмоциональной реакции. Правильных и неправильных ответов нет, важно ваше личное впечатление. Время на ответ не ограничено, но мы фиксируем, сколько его уходит на каждую фотографию.</p>' +
-    '<p>Понадобится компьютер, ноутбук или телефон и около 15–20 минут. Будут короткие перерывы.</p>' +
+    '<p>Понадобится компьютер, ноутбук или телефон и около 8-12 минут. Будут короткие перерывы.</p>' +
     '<p class="muted">Некоторые фотографии могут показаться вам неприятными (умеренно). Участие добровольное, прекратить его можно в любой момент, закрыв страницу.</p>' +
     '<div class="row"><button class="primary" id="go">Далее</button></div>',
     (n2, res) => { n2.querySelector('#go').onclick = () => res(); });
