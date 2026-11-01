@@ -310,7 +310,8 @@ async function demographics() {
     '<h2>Несколько вопросов о вас</h2>' +
     '<div class="field"><label for="nick">Никнейм</label><input id="nick" type="text" maxlength="40" autocomplete="off" placeholder="любой, можно даже один символ">' +
       '<div class="muted">Он нужен только для того, чтобы отличать участников друг от друга. Настоящее имя указывать не нужно.</div></div>' +
-    '<div class="field"><label for="contact">Номер телефона или e-mail (по желанию). Укажите, если хотите участвовать в наших дальнейших исследованиях: мы свяжемся с вами. Если не хотите, оставьте поле пустым</label><input id="contact" type="text" maxlength="80" autocomplete="off"></div>' +
+    '<div class="field"><label for="contact">Номер телефона или e-mail (по желанию)</label><input id="contact" type="text" maxlength="80" autocomplete="off"></div>' +
+      '<div class="muted">Укажите, если хотите участвовать в наших дальнейших исследованиях: мы свяжемся с вами. Если не хотите, оставьте поле пустым.</div></div>' +
     '<div class="field"><label for="gender">Пол</label><select id="gender"><option value="">— выберите —</option><option>женский</option><option>мужской</option></select></div>' +
     '<div class="field"><label for="age">Возраст (полных лет)</label><input id="age" type="number" min="1" max="120" inputmode="numeric"></div>' +
     '<p class="err" id="err"></p>' +
